@@ -83,8 +83,9 @@ let ROSTER = null, rosLoaded = false; if (!KV) { try { ROSTER = JSON.parse(fs.re
 function rosterMerge(a, b) {
   if (!a || !Array.isArray(a.b)) return b; if (!b || !Array.isArray(b.b)) return a;
   const M = new Map(); for (const e of a.b) if (e && e.n) M.set(e.n, e);
-  for (const e of b.b) { if (!e || !e.n) continue; const o = M.get(e.n); if (!o || (e.m || 0) > (o.m || 0) || ((e.m || 0) === (o.m || 0) && (e.xp || 0) > (o.xp || 0))) M.set(e.n, e); }
-  return { b: [...M.values()].slice(0, 64), t: Date.now() };
+  for (const e of b.b) { if (!e || !e.n) continue; const o = M.get(e.n); if (!o || (e.m || 0) > (o.m || 0) || ((e.m || 0) === (o.m || 0) && ((e.xp || 0) > (o.xp || 0) || ((e.xp || 0) === (o.xp || 0) && (e.lrn || 0) > (o.lrn || 0))))) M.set(e.n, e); }
+  let sty = a.sty || b.sty; if (a.sty && b.sty && b.sty.n > a.sty.n) sty = b.sty; if (sty && typeof sty !== 'object') sty = null;
+  return { b: [...M.values()].slice(0, 64), t: Date.now(), sty: sty || undefined };
 }
 let rosT = null; function rosterSave() { clearTimeout(rosT); rosT = setTimeout(() => { if (KV) { kv(['SET', 'roster', JSON.stringify(ROSTER)]).catch(e => console.log('! could not save bot memory: ' + e.message)); return; } try { fs.writeFileSync(ROSTER_FILE + '.tmp', JSON.stringify(ROSTER)); fs.renameSync(ROSTER_FILE + '.tmp', ROSTER_FILE); } catch (e) { console.log('! could not save bot memory: ' + e.message); } }, 300); }
 function rosterApi(req, res) {
