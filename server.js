@@ -181,7 +181,8 @@ let arenaRound = 0, arenaLast = null, arenaT = null;
 const MM = () => match ? match.mode : cfg.mode;
 function humans() { return [...P.values()].filter(q => !q.bot).length; }
 function bc(o, except) { const s = JSON.stringify(o); for (const p of P.values()) if (p !== except && p.c) p.c.sendStr(s); }
-function plist() { return [...P.values()].map(p => ({ id: p.id, name: p.name, team: p.team, k: p.k, d: p.d, skin: p.skin, gskin: p.gskin, inm: p.inm, bot: !!p.bot, owner: p.owner || 0 })); }
+function cosClean(c) { const o = {}; if (c && typeof c === 'object') for (const k of ['lsv', 'card', 'title', 'badge', 'emo']) { const v = String(c[k] || ''); if (/^[A-Za-z0-9_]{0,24}$/.test(v)) o[k] = v; } return o; }
+function plist() { return [...P.values()].map(p => ({ id: p.id, name: p.name, team: p.team, k: p.k, d: p.d, skin: p.skin, gskin: p.gskin, cos: p.cos || {}, inm: p.inm, bot: !!p.bot, owner: p.owner || 0 })); }
 function lobby() { bc({ t: 'lobby', host, cfg, room: rid, pub, mm: match ? match.mode : null, inMatch: !!match, players: plist() }); }
 function teamCount(t) { let n = 0; for (const p of P.values()) if (p.team === t) n++; return n; }
 function startFor(p) { p.inm = true; p.alive = false; p.hp = 100; p.st = null; p.stT = 0; p.portals = [null, null]; if (p.c) p.c.send({ t: 'start', cfg: Object.assign({}, cfg, { map: match ? match.map : Math.max(0, cfg.map), mode: MM(), arena: match ? match.arena : 0 }), age: match ? (Date.now() - match.t0) / 1000 : 0, players: plist(), ts: match ? match.ts : [0, 0], bots: [...P.values()].filter(b => b.bot).map(b => ({ id: b.id, name: b.name, team: b.team, skin: b.skin, owner: b.owner })) }); }
@@ -220,6 +221,7 @@ function elimCheck() {
 function handle(p, m) {
   const t = m.t;
   if (!p.joined) return;
+  if (t === 'cos') { const now = Date.now(); if (now - (p.cosT || 0) < 250) return; p.cosT = now; p.skin = Math.max(0, Math.min(40, m.skin | 0)); p.gskin = Math.max(0, Math.min(80, m.gskin | 0)); p.cos = cosClean(m.cos); lobby(); return; }
   if (t === 'cfg' && p.id === host && !match) {
     if (Number.isInteger(m.map) && m.map >= -1 && m.map < 64) cfg.map = m.map;
     if (MODES.includes(m.mode)) cfg.mode = m.mode;
@@ -313,7 +315,7 @@ function tickSnap() {
   function autoStart(delay) { if (!pub) return; clearTimeout(autoT); autoT = setTimeout(() => { autoT = null; if (match || humans() === 0) return; const h = P.get(host) || [...P.values()].find(q => !q.bot); if (h) startMatch(h); }, delay); bc({ t: 'soon', in: Math.round(delay / 1000) }); }
   function join(p, m) {
     p.joined = true; p.room = api; p.name = String(m.name || 'Player').replace(/[<>&"]/g, '').slice(0, 16) || 'Player';
-    p.skin = Math.max(0, Math.min(40, m.skin | 0)); p.gskin = Math.max(0, Math.min(80, m.gskin | 0));
+    p.skin = Math.max(0, Math.min(40, m.skin | 0)); p.gskin = Math.max(0, Math.min(80, m.gskin | 0)); p.cos = cosClean(m.cos);
     p.team = teamCount(0) <= teamCount(1) ? 0 : 1; P.set(p.id, p); if (!host) host = p.id;
     p.c.send({ t: 'welcome', id: p.id, room: rid, pub, name: p.name }); lobby(); console.log('+ ' + p.name + ' joined room ' + rid + ' (' + humans() + ' here)');
     if (match) startFor(p); else if (pub && !autoT) autoStart(5000);
