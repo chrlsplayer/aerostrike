@@ -182,10 +182,10 @@ const MM = () => match ? match.mode : cfg.mode;
 function humans() { return [...P.values()].filter(q => !q.bot).length; }
 function bc(o, except) { const s = JSON.stringify(o); for (const p of P.values()) if (p !== except && p.c) p.c.sendStr(s); }
 function cosClean(c) { const o = {}; if (c && typeof c === 'object') for (const k of ['lsv', 'card', 'title', 'badge', 'emo']) { const v = String(c[k] || ''); if (/^[A-Za-z0-9_]{0,24}$/.test(v)) o[k] = v; } return o; }
-function plist() { return [...P.values()].map(p => ({ id: p.id, name: p.name, team: p.team, k: p.k, d: p.d, skin: p.skin, gskin: p.gskin, cos: p.cos || {}, inm: p.inm, bot: !!p.bot, owner: p.owner || 0 })); }
+function plist() { return [...P.values()].map(p => ({ id: p.id, name: p.name, team: p.team, k: p.k, d: p.d, skin: p.skin, gskin: p.gskin, cos: p.cos || {}, ob: p.ob || 0, inm: p.inm, bot: !!p.bot, owner: p.owner || 0 })); }
 function lobby() { bc({ t: 'lobby', host, cfg, room: rid, pub, mm: match ? match.mode : null, inMatch: !!match, players: plist() }); }
 function teamCount(t) { let n = 0; for (const p of P.values()) if (p.team === t) n++; return n; }
-function startFor(p) { p.inm = true; p.alive = false; p.hp = 100; p.st = null; p.stT = 0; p.portals = [null, null]; if (p.c) p.c.send({ t: 'start', cfg: Object.assign({}, cfg, { map: match ? match.map : Math.max(0, cfg.map), mode: MM(), arena: match ? match.arena : 0 }), age: match ? (Date.now() - match.t0) / 1000 : 0, players: plist(), ts: match ? match.ts : [0, 0], bots: [...P.values()].filter(b => b.bot).map(b => ({ id: b.id, name: b.name, team: b.team, skin: b.skin, owner: b.owner })) }); }
+function startFor(p) { p.inm = true; p.alive = false; p.hp = 100; p.sh = 50; p.st = null; p.stT = 0; p.portals = [null, null]; if (p.c) p.c.send({ t: 'start', cfg: Object.assign({}, cfg, { map: match ? match.map : Math.max(0, cfg.map), mode: MM(), arena: match ? match.arena : 0 }), age: match ? (Date.now() - match.t0) / 1000 : 0, players: plist(), ts: match ? match.ts : [0, 0], bots: [...P.values()].filter(b => b.bot).map(b => ({ id: b.id, name: b.name, team: b.team, skin: b.skin, owner: b.owner })) }); }
 function removeBots(owner) { for (const b of [...P.values()]) if (b.bot && (owner === undefined || b.owner === owner)) { P.delete(b.id); bc({ t: 'left', id: b.id }); } }
 function attacker(p, from) { if (from === undefined || from === null) return p; const b = P.get(from); return (b && b.bot && b.owner === p.id) ? b : null; }
 function near(a, b, r) { return a && b && Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) < r; }
@@ -207,7 +207,7 @@ function startMatch(p) {
   match = { mode, arena: cfg.mode === 'arena' ? arenaRound : 0, ts: [0, 0], map: pickMap(mode), t0: Date.now(), bomb: { h: 0, t: 0, wait: 23, cd: 0 }, el: { st: 'play', t: 0 } }; removeBots();
   const team = TEAMM(mode), hum = humans(), want = cfg.bots < 0 ? Math.max(0, (team ? (mode === 'lab' ? 6 : 10) : 8) - hum) : cfg.bots;
   for (let i = 0; i < Math.min(14, want); i++) { const b = { id: nid++, c: null, bot: true, owner: p.id, name: BOT_NAMES[i % BOT_NAMES.length], skin: (Math.random() * 9) | 0, gskin: 0, team: teamCount(0) <= teamCount(1) ? 0 : 1, hp: 100, alive: false, k: 0, d: 0, st: null, lastDmg: 0, dmgWin: [], healT: 0, inm: true, joined: true }; P.set(b.id, b); }
-  for (const q of P.values()) { q.k = 0; q.d = 0; q.elDead = false; } for (const q of P.values()) startFor(q); lobby();
+  for (const q of P.values()) { q.k = 0; q.d = 0; q.ob = 0; q.elDead = false; } for (const q of P.values()) startFor(q); lobby();
   console.log('> match started: ' + mode + (match.arena ? ' (arena round ' + match.arena + ')' : '') + ' on map ' + match.map);
 }
 function elimCheck() {
@@ -215,7 +215,7 @@ function elimCheck() {
   const al = [0, 0]; for (const q of P.values()) if (q.inm && q.alive) al[q.team ? 1 : 0]++;
   if (al[0] && al[1]) return; const w = al[0] ? 0 : 1; match.ts[w]++; match.el.st = 'gap'; bc({ t: 'round', w, ts: match.ts });
   if (match.ts[w] >= (match.mode === 'lab' ? 3 : 4)) { setTimeout(() => endMatch(0, w), 2500); return; }
-  setTimeout(() => { if (!match || !ELM(match.mode)) return; match.el.st = 'play'; for (const q of P.values()) if (q.inm) { q.alive = true; q.hp = 100; q.fresh = true; q.freshT = now() + 2500; q.elDead = false; } bc({ t: 'rstart' }); }, 4000);
+  setTimeout(() => { if (!match || !ELM(match.mode)) return; match.el.st = 'play'; for (const q of P.values()) if (q.inm) { q.alive = true; q.hp = 100; q.sh = 50; q.fresh = true; q.freshT = now() + 2500; q.elDead = false; } bc({ t: 'rstart' }); }, 4000);
 }
 
 function handle(p, m) {
@@ -247,7 +247,7 @@ function handle(p, m) {
     p.st = { x: num(s.x, 0), y: num(s.y, 0), z: num(s.z, 0), yw: num(s.yw, 0), pt: num(s.pt, 0), vx: num(s.vx, 0), vz: num(s.vz, 0), g: s.g ? 1 : 0, sl: s.sl ? 1 : 0, cr: s.cr ? 1 : 0, wr: num(s.wr, 0), w: Math.max(0, Math.min(7, s.w | 0)), sh: s.sh ? 1 : 0, pz: s.pz ? 1 : 0, ck: s.ck ? 1 : 0 };
     return;
   }
-  if (t === 'resp') { const A = attacker(p, m.from); if (ELM(match.mode) && (!A || A.elDead || match.el.st !== 'play')) return; if (A && !A.alive) { A.alive = true; A.hp = 100; A.lastDmg = 0; A.fresh = true; A.freshT = now() + 2500; } return; }
+  if (t === 'resp') { const A = attacker(p, m.from); if (ELM(match.mode) && (!A || A.elDead || match.el.st !== 'play')) return; if (A && !A.alive) { A.alive = true; A.hp = 100; A.sh = 50; A.lastDmg = 0; A.fresh = true; A.freshT = now() + 2500; } return; }
   if (t === 'bst' && Array.isArray(m.ps)) { for (const q of m.ps.slice(0, 16)) { const b = P.get(q && q.id); if (!b || !b.bot || b.owner !== p.id || !q.s) continue; const s = q.s; b.st = { x: num(s.x, 0), y: num(s.y, 0), z: num(s.z, 0), yw: num(s.yw, 0), pt: 0, vx: num(s.vx, 0), vz: 0, g: s.g ? 1 : 0, sl: s.sl ? 1 : 0, cr: 0, wr: 0, w: Math.max(0, Math.min(7, s.w | 0)), sh: 0, pz: 0, ck: 0 }; } return; }
   if (t === 'eff') {
     const tg = P.get(m.to), A = attacker(p, m.from); if (!tg || !tg.alive || !A || !A.alive || !['slow', 'stun', 'pull'].includes(m.k)) return;
@@ -267,8 +267,9 @@ function handle(p, m) {
       if (sum + dmg > 700) return; A.dmgWin.push({ t: tn, d: dmg });
     }
     let d = dmg; if (tg.st && tg.st.pz) d = 0; else if (tg.st && tg.st.sh) d *= .3; if (d <= 0) return;
+    if ((tg.sh || 0) > 0) { const a = Math.min(tg.sh, d); tg.sh -= a; d -= a; }
     tg.hp -= d; tg.lastDmg = now();
-    bc({ t: 'dmg', to: tg.id, hp: Math.max(0, Math.round(tg.hp)), by: A.id, head: !!m.head });
+    bc({ t: 'dmg', to: tg.id, hp: Math.max(0, Math.round(tg.hp)), sh: Math.round(tg.sh || 0), by: A.id, head: !!m.head });
     if (tg.hp <= 0) {
       tg.alive = false; tg.d++;
       const md = MM(); if (ELM(md)) tg.elDead = true; if (tg !== A) { A.k++; if (KILLTS(md)) match.ts[A.team]++; }
@@ -283,6 +284,7 @@ function handle(p, m) {
   }
   if (t === 'portal' && p.alive && Array.isArray(m.p)) { p.portals[m.i ? 1 : 0] = { x: num(m.p[0], 0), y: num(m.p[1], 0), z: num(m.p[2], 0) }; }
   if (t === 'ms' && p.id === host) { m.id = p.id; bc(m, p); return; }
+  if (t === 'obj') { const A = attacker(p, m.from); const n = Math.max(0, Math.min(3, num(m.n, 0))); if (A && n) { A.ob = (A.ob || 0) + n; const tn = now(); if (tn - (match.obT || 0) > 500) { match.obT = tn; lobby(); } } return; }
   if (t === 'msc' && p.id === host && (MM() === 'dom' || MM() === 'ctf')) { const tm = m.team ? 1 : 0, n = Math.max(0, Math.min(10, num(m.n, 1))); match.ts[tm] += n; bc({ t: 'ts', ts: match.ts, cap: MM() === 'ctf' ? tm : undefined }); const lim = MM() === 'ctf' ? 3 : 150; if (match.ts[tm] >= lim) endMatch(0, tm); return; }
   if ((t === 'shot' || t === 'fx' || t === 'portal') && (p.alive || t === 'shot' || t === 'fx')) { m.id = p.id; bc(m, p); return; }
 }
@@ -304,8 +306,8 @@ function tickSnap() {
   const bm = MM() === 'bt' || MM() === 'tbt'; if (bm) { bombTick(); if (!match) return; }
   for (const p of P.values()) {
     if (!p.inm) continue;
-    if (bm) p.hp = 100; else if (p.alive && p.hp < 100 && tn - p.lastDmg > 5000) p.hp = Math.min(100, p.hp + 15 * .05);
-    ps.push({ id: p.id, s: p.st, hp: Math.round(p.hp), al: p.alive ? 1 : 0, tm: p.team });
+    if (bm) p.hp = 100; else if (p.alive && tn - p.lastDmg > 5000) { if (p.hp < 100) p.hp = Math.min(100, p.hp + 15 * .05); if ((p.sh || 0) < 50) p.sh = Math.min(50, (p.sh || 0) + 25 * .05); }
+    ps.push({ id: p.id, s: p.st, hp: Math.round(p.hp), sh: Math.round(p.sh || 0), al: p.alive ? 1 : 0, tm: p.team });
   }
   bc({ t: 'snap', ps });
 }
