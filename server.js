@@ -160,8 +160,8 @@ srv.on('upgrade', (req, sock) => {
 // ---------- shared game constants ----------
 let nid = 1;
 // half-size of each map (used to reject out-of-map positions)
-const MAP_S = [58,56,56,62,60,54,58,62,54,60,51,40,38,60];
-const LAB_MAPS = [11,12];
+const MAP_S = [50,52,50,54,52,48,50,50,40,38];
+const LAB_MAPS = [8,9];
 const BOT_NAMES = ['Vex','Rook','Nova','Jinx','Echo','Kade','Mira','Zed','Onyx','Pike','Sable','Tarn','Lumi','Rift','Coda','Halo'];
 const now = () => Date.now();
 const MODES = ['ffa','tdm','dom','elim','gg','fz','bt','tgg','tfz','tbt','svs','ctf','lab','arena'];
