@@ -544,6 +544,9 @@ body.dark .bpc{background:linear-gradient(180deg,rgba(40,70,110,.8),rgba(20,40,7
 .ins-t{flex:1 1 260px;display:flex;flex-direction:column;gap:6px}.ins-t h2{margin:0;font:900 26px 'Nunito',system-ui}.ins-t p{margin:0 0 6px;line-height:1.45}.ins-r{font:900 11px 'Nunito';letter-spacing:1.5px;color:var(--rc);text-transform:uppercase}.ins-t .lb{max-width:220px}
 .ins-lk{font-weight:800;color:#4f7898}.ins-x{position:absolute;top:10px;right:12px;border:0;background:rgba(255,255,255,.85);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;color:#103a5c;box-shadow:0 2px 6px rgba(0,60,120,.2);z-index:2}
 body.dark .ins-c{background:linear-gradient(180deg,rgba(30,55,90,.97),rgba(18,36,64,.95));color:#e4f2ff}body.dark .ins-v{background:radial-gradient(circle at 50% 40%,#3a6a9a,#1a3a5a 75%)}
+.padf{outline:3px solid #ffd23a!important;outline-offset:3px;box-shadow:0 0 0 6px rgba(255,210,58,.35),0 0 18px rgba(255,210,58,.6)!important;position:relative;z-index:1}
+.padh{display:grid;grid-template-columns:1fr;gap:4px;margin-bottom:10px}.padh>div{display:flex;gap:10px;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.55)}.padh b{min-width:150px}.padc{font-weight:900;color:#2aa84a}.padc.off{color:#4f7898;font-weight:700}
+body.dark .padh>div{background:rgba(255,255,255,.08)}
 </style></head><body>
 <div id="mob"><div id="mjoy"></div><div id="mlook"></div><div id="mlook2"></div><div id="mbase"><div id="mknob"></div></div>
 <div class="mb" id="mfire" data-f="fire" style="right:118px;bottom:118px">FIRE</div><div class="mb" data-f="aim" id="maim" style="right:132px;bottom:214px">AIM</div>
@@ -650,7 +653,7 @@ const TABS=[['game','Gameplay'],['audio','Audio'],['video','Graphics'],['cross',
 const sl=(lbl,id,v,min,max,step,show)=>row(lbl+' <b id="v_'+id+'">'+show+'</b>','<input type="range" id="s_'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+v+'">'),cb=(lbl,id,v)=>row(lbl,'<input type="checkbox" id="s_'+id+'"'+(v?' checked':'')+'>');
 const chipsH=(id,list,cur)=>'<div class="schips">'+list.map(x=>'<button class="chip'+(x[0]===cur?' sel':'')+'" data-sv="'+id+':'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
 let h='';
-if(STAB==='game')h='<h2>Aiming</h2>'+sl('Mouse sensitivity','sens',S.sens,.2,3,.05,S.sens.toFixed(2))+cb('Invert Y axis','invY',S.invY)+'<h2>View</h2>'+sl('Field of view','fov',S.fov,60,110,1,S.fov)+'<h2>Matches</h2>'+cb('Play the map intro before matches','intro',S.intro!==false);
+if(STAB==='game')h='<h2>Aiming</h2>'+sl('Mouse sensitivity','sens',S.sens,.2,3,.05,S.sens.toFixed(2))+sl('Controller look sensitivity','padSens',S.padSens||1,.3,3,.05,(S.padSens||1).toFixed(2))+cb('Invert Y axis','invY',S.invY)+'<h2>View</h2>'+sl('Field of view','fov',S.fov,60,110,1,S.fov)+'<h2>Matches</h2>'+cb('Play the map intro before matches','intro',S.intro!==false);
 else if(STAB==='audio')h='<h2>Volume</h2>'+sl('Master volume','vol',S.vol,0,1,.05,Math.round(S.vol*100))+sl('Music volume','mus',S.mus,0,1,.05,Math.round(S.mus*100))+sl('Ambient sound','amb',S.amb,0,1,.05,Math.round(S.amb*100))+
 '<h2>Soundtrack</h2>'+chipsH('snd',LK.snd.filter(x=>lkReq(x[2])).map(x=>[x[0],x[1]]),S.snd||'aero')+vpickH();
 else if(STAB==='video')h='<h2>Quality</h2>'+row('Portal view quality','<select id="s_pq"><option value="0.5">Low</option><option value="0.8">Medium</option><option value="1">High</option></select>')+cb('Shadows','sh',S.shadows!==false)+cb('Floating bubbles in maps','bub',S.bub!==false)+'<h2>Info</h2>'+cb('Show FPS counter','fps',S.fps)+'<h2>Screen</h2><div class="row"><span>Full screen (or press F11)</span><button id="s_fs">Toggle full screen</button></div>';
@@ -658,12 +661,12 @@ else if(STAB==='cross')h='<h2>Crosshair</h2>'+sl('Size','xs',S.xs,6,40,1,S.xs)+r
 '<h2>Feedback</h2>'+cb('Hit markers','hmk',S.hmk!==false)+cb('Damage numbers','dn',S.dn!==false)+'<h2>HUD</h2>'+sl('HUD size','hs',S.hs||100,70,130,5,(S.hs||100)+'%')+sl('HUD opacity','hudo',S.hudo||100,40,100,5,(S.hudo||100)+'%');
 else if(STAB==='theme')h='<h2>Mode</h2>'+chipsH('theme',[['light','Light (Aero sky)'],['dark','Dark (Night glass)'],['auto','Match my computer']],S.theme||'light')+'<h2>Accent color</h2>'+chipsH('accent',[['aqua','Aqua'],['mint','Mint'],['pink','Bubblegum'],['violet','Violet'],['sun','Sunset']],S.accent||'aqua')+'<h2>Menus</h2>'+sl('Menu size','ui',S.ui||100,80,120,5,(S.ui||100)+'%');
 else if(STAB==='acct')h=accTabH();
-else h='<h2>Key bindings</h2><div id="keys"></div><h2>Controls guide</h2><div style="line-height:1.6;opacity:.92;margin-bottom:10px">'+document.getElementById('help').innerHTML+'</div>';
+else h='<h2>Key bindings</h2><div id="keys"></div>'+padHelpH()+'<h2>Controls guide</h2><div style="line-height:1.6;opacity:.92;margin-bottom:10px">'+document.getElementById('help').innerHTML+'</div>';
 el.innerHTML='<div class="box sbox"><div class="shead"><h1>Settings</h1><button id="s_close">&#10005;</button></div><div class="stabs">'+TABS.map(t=>'<span class="stab'+(t[0]===STAB?' sel':'')+'" data-st="'+t[0]+'">'+t[1]+'</span>').join('')+'</div><div class="sbody">'+h+'</div><div class="sfoot"><button id="s_reset">Reset everything to defaults</button><button id="s_close2" class="pri">Done</button></div></div>';
 el.querySelectorAll('[data-st]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();STAB=e.dataset.st;renderSet();});
 el.querySelectorAll('[data-sv]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();const [k,v]=e.dataset.sv.split(':');S[k]=v;if(k==='snd'){MUS.pk=v;try{ensureAC();jingle('win');}catch(_){}}if(k==='annv'){try{announce('Triple kill!',null,false,2);}catch(_){}}save();applyTheme();renderSet();});
 const rng=(id,fn,fmt)=>on('s_'+id,'oninput',e=>{fn(+e.target.value);const b=g('v_'+id);if(b)b.textContent=fmt?fmt(+e.target.value):e.target.value;applySettings();applyTheme();save();});
-rng('sens',v=>S.sens=v,v=>v.toFixed(2));rng('fov',v=>S.fov=v);rng('vol',v=>S.vol=v,v=>Math.round(v*100));rng('mus',v=>S.mus=v,v=>Math.round(v*100));rng('amb',v=>S.amb=v,v=>Math.round(v*100));rng('xs',v=>S.xs=v);rng('hs',v=>S.hs=v,v=>v+'%');rng('hudo',v=>S.hudo=v,v=>v+'%');rng('ui',v=>S.ui=v,v=>v+'%');
+rng('sens',v=>S.sens=v,v=>v.toFixed(2));rng('padSens',v=>S.padSens=v,v=>v.toFixed(2));rng('fov',v=>S.fov=v);rng('vol',v=>S.vol=v,v=>Math.round(v*100));rng('mus',v=>S.mus=v,v=>Math.round(v*100));rng('amb',v=>S.amb=v,v=>Math.round(v*100));rng('xs',v=>S.xs=v);rng('hs',v=>S.hs=v,v=>v+'%');rng('hudo',v=>S.hudo=v,v=>v+'%');rng('ui',v=>S.ui=v,v=>v+'%');
 const chk=(id,fn)=>on('s_'+id,'onchange',e=>{fn(e.target.checked);applySettings();save();});
 chk('invY',v=>S.invY=v);chk('intro',v=>S.intro=v);chk('sh',v=>S.shadows=v);chk('bub',v=>S.bub=v);chk('fps',v=>S.fps=v);chk('hmk',v=>S.hmk=v);chk('dn',v=>S.dn=v);
 if(g('s_pq')){g('s_pq').value=String(S.pq);g('s_pq').onchange=e=>{S.pq=+e.target.value;applySettings();save();};}
@@ -2962,12 +2965,66 @@ if(LBG.scene===1&&LBG.chars.length===2){LBG.tr-=dt;if(LBG.tr<=0){LBG.tr=.35+Math
 for(let i=tracers.length-1;i>=0;i--){const q=tracers[i];q.t-=dt;if(q.t<=0){rmD(q.m);tracers.splice(i,1);}}}
 try{aeroUpd(dt);zUpd(dt);}catch(_){}}
 
+// ================= GAME CONTROLLER (Xbox / PlayStation / Switch Pro / any standard gamepad) =================
+const PAD={on:false,id:'',prev:[],lx:0,ly:0,mm:0,rx:0,ry:0,sprint:false,lt:0,rt:0,fireP:false,adsP:false,focus:null,fkey:'',navT:0,used:0,last:0,sb:false};
+// button -> canonical key code (same codes the keyboard uses, so every action works the same)
+const PADK={0:'Space',1:'KeyC',2:'KeyR',4:'KeyQ',5:'KeyF',12:'KeyG',13:'KeyX',14:'Digit3',15:'KeyV',11:'KeyV'};
+const PADH=[['Left stick','Move (click L3 to sprint)'],['Right stick','Look / aim'],['RT / R2','Shoot'],['LT / L2','Aim down sights'],['A / Cross','Jump / double jump'],['B / Circle','Slide / crouch'],['X / Square','Reload'],['Y / Triangle','Swap weapon'],['LB / L1','Place portal'],['RB / R1','Legend ability'],['D-pad up','Attack item (grenade)'],['D-pad down','Utility item'],['D-pad left','Pickup weapon'],['D-pad right / R3','Melee'],['Start / Options','Pause'],['View / Share (hold)','Scoreboard'],['In menus','D-pad or left stick to move, A to select, B to go back, LB / RB to switch tabs, right stick to scroll, Start to play']];
+function padHelpH(){return '<h2>Controller</h2><div class="padh">'+(PAD.on?'<div class="padc">&#127918; Connected: '+esc(PAD.id.replace(/\(.*?\)/g,'').trim().slice(0,48)||'Controller')+'</div>':'<div class="padc off">Plug in or pair a controller and press any button.</div>')+PADH.map(x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('')+'</div>';}
+function padGet(){try{if(typeof navigator==='undefined'||!navigator.getGamepads)return null;const L=navigator.getGamepads();for(const g of L)if(g&&g.connected!==false&&g.buttons&&g.buttons.length)return g;}catch(_){}return null;}
+const padDZ=(x,y,dz)=>{const m=Math.hypot(x,y);if(m<dz)return [0,0,0];const k=Math.min(1,(m-dz)/(1-dz))/m;return [x*k,y*k,Math.min(1,(m-dz)/(1-dz))];};
+function padMenuRoot(){const ins=document.getElementById('ins');if(ins&&ins.className==='on')return ins;const acp=document.getElementById('acp');if(acp&&acp.style.display==='flex')return acp;const se=document.getElementById('set');if(se&&se.style.display==='block')return se;
+if(endEl&&endEl.style.display&&endEl.style.display!=='none')return endEl;if(lobbyEl&&lobbyEl.style.display==='block')return lobbyEl;const svp=document.getElementById('svp');if(svp&&svp.style.display&&svp.style.display!=='none')return svp;return null;}
+function padItems(root){const out=[];root.querySelectorAll('[data-a],[data-i],[data-t],button,input,select').forEach(e=>{if(e.disabled)return;const r=e.getBoundingClientRect();if(r.width<4||r.height<4)return;if(e.closest('[data-a]')!==e&&e.closest('[data-a]')&&!e.matches('button,input,select'))return;out.push(e);});return out;}
+const padKey=e=>e?(e.dataset.a||e.dataset.i||e.dataset.t||e.id||'')+'|'+(e.dataset.v||''):'';
+function padFocus(e){if(PAD.focus&&PAD.focus!==e)PAD.focus.classList.remove('padf');PAD.focus=e;PAD.fkey=padKey(e);if(e){e.classList.add('padf');try{e.scrollIntoView({block:'nearest',inline:'nearest'});}catch(_){}}}
+function padNav(dx,dy){const root=padMenuRoot();if(!root)return;const L=padItems(root);if(!L.length)return;let cur=PAD.focus;if(!cur||!cur.isConnected||!root.contains(cur)){cur=L.find(e=>padKey(e)===PAD.fkey)||L.find(e=>PAD.rk&&padKey(e)===PAD.rk)||null;if(cur&&!dx&&!dy){padFocus(cur);return;}}
+if(!cur){padFocus(root.querySelector('[data-i="eq"],[data-a="hplay"],[data-a="keq"],.lb.sel')||L.find(e=>!e.closest('.topbar'))||L[0]);return;}if(!dx&&!dy){padFocus(cur);return;}
+const a=cur.getBoundingClientRect(),ax=a.left+a.width/2,ay=a.top+a.height/2;let best=null,bs=1e9;
+for(const e of L){if(e===cur)continue;const b=e.getBoundingClientRect(),bx=b.left+b.width/2,by=b.top+b.height/2,ddx=bx-ax,ddy=by-ay,along=ddx*dx+ddy*dy;if(along<=4)continue;const perp=Math.abs(ddx*dy-ddy*dx),s=along+perp*2.2;if(s<bs){bs=s;best=e;}}
+if(best){padFocus(best);try{sfx('ui');}catch(_){}}}
+function padClick(){const root=padMenuRoot();if(!root)return;let e=PAD.focus;if(!e||!e.isConnected||!root.contains(e)){padNav(0,0);e=PAD.focus;}if(!e)return;if(root!==document.getElementById('ins'))PAD.rk=padKey(e);if(e.tagName==='INPUT'&&e.type==='checkbox'){e.click();return;}if(e.tagName==='INPUT'&&e.type==='range')return;try{e.click();}catch(_){}
+setTimeout(()=>{const r=padMenuRoot();if(r&&PAD.used){const L=padItems(r),m=L.find(x=>padKey(x)===PAD.fkey);if(m)padFocus(m);else padNav(0,0);}},60);}
+function padBack(){const ins=document.getElementById('ins');if(ins&&ins.className==='on'){insClose();return;}const se=document.getElementById('set');if(se&&se.style.display==='block'){se.style.display='none';try{save();}catch(_){}return;}
+if(state==='lobby'){if(QU.on&&!QU.found){quCancel();return;}if(LBscr==='ksel'){act('go','kit');return;}if(LBscr!=='main'){act('go','main');return;}}}
+function padTab(d){if(state!=='lobby')return;const T=['main','kit','locker','bp','career'];let i=T.indexOf(LBscr==='ksel'?'kit':LBscr);if(i<0)i=0;act('go',T[(i+d+T.length)%T.length]);PAD.focus=null;PAD.fkey='';}
+function padRange(d){const e=PAD.focus;if(!e||e.tagName!=='INPUT'||e.type!=='range')return false;const st=+e.step||1;e.value=Math.max(+e.min,Math.min(+e.max,+e.value+d*st));e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true;}
+function padTick(dt){const g=padGet();if(!g){if(PAD.on){PAD.on=false;PAD.lx=PAD.ly=PAD.mm=0;if(PAD.fireP){firing=false;PAD.fireP=false;}if(PAD.adsP){ads=false;PAD.adsP=false;}for(const c of Object.values(PADK))keys[c]=false;if(PAD.sprint){keys.ShiftLeft=false;PAD.sprint=false;}}return;}
+if(!PAD.on){PAD.on=true;PAD.id=g.id||'Controller';try{toast('Controller connected');}catch(_){}}
+const B=g.buttons.map(b=>b&&(b.pressed||b.value>.5)),V=g.buttons.map(b=>b?b.value:0),P=PAD.prev,dn=i=>B[i]&&!P[i],up=i=>!B[i]&&P[i];PAD.prev=B;
+const ax=g.axes||[],L=padDZ(ax[0]||0,ax[1]||0,.2),R=padDZ(ax[2]||0,ax[3]||0,.12);if(B.some(Boolean)||L[2]||R[2])PAD.used=performance.now();
+const play=state==='play'&&!over,menu=padMenuRoot();
+if(state==='intro'){if(B.some((b,i)=>b&&!P[i]))try{introEnd(1);}catch(_){}return;}
+if(play&&!menu&&!(SV.pick&&LB.mode==='sv')){
+ if(!started){PAD.lx=PAD.ly=PAD.mm=0;if((dn(0)||dn(9)||dn(7))&&!CD.on){started=true;startEl.style.display='none';}return;}
+ PAD.lx=L[0];PAD.ly=L[1];PAD.mm=L[2];
+ if(dn(10))PAD.sprint=!PAD.sprint;if(PAD.sprint&&L[2]<.25)PAD.sprint=false;if(PAD.sprint)keys.ShiftLeft=true;else if(PAD.spOn)keys.ShiftLeft=false;PAD.spOn=PAD.sprint;
+ const rt=(V[7]||0)>.35,lt=(V[6]||0)>.35;if(rt!==PAD.fireP){firing=rt;PAD.fireP=rt;}if(lt!==PAD.adsP){ads=lt;PAD.adsP=lt;}
+ for(const i in PADK){const c=PADK[i];if(dn(+i))keyDown(c,false);else if(up(+i))keys[c]=false;}
+ if(dn(3))selW(wi===lo().p?lo().s:lo().p);
+ if(dn(8)){sbOn=true;sbRender();}if(up(8)){sbOn=false;sbRender();}
+ if(dn(9)){started=false;firing=false;ads=false;PAD.fireP=PAD.adsP=false;for(const k in keys)keys[k]=false;PAD.sprint=false;startEl.style.display='flex';try{document.exitPointerLock();}catch(_){}return;}
+ if(R[2]){const cv=v=>Math.sign(v)*Math.pow(Math.abs(v),1.7),ss=(S.padSens||1)/(ads?ZOOM[WB(wi)]:1)*(PST.stun>0?.35:1);yaw-=cv(R[0])*dt*3.4*ss;pitch=Math.max(-1.5,Math.min(1.5,pitch-(S.invY?-1:1)*cv(R[1])*dt*2.5*ss));}
+ return;}
+// menus
+PAD.lx=PAD.ly=PAD.mm=0;if(PAD.fireP){firing=false;PAD.fireP=false;}if(PAD.adsP){ads=false;PAD.adsP=false;}
+if(SV.pick&&LB.mode==='sv'){if(dn(14))svChoose(0);if(dn(0)||dn(12)||dn(13))svChoose(1);if(dn(15))svChoose(2);return;}
+if(!menu)return;
+let dx=(B[15]?1:0)-(B[14]?1:0),dy=(B[13]?1:0)-(B[12]?1:0);if(!dx&&!dy&&L[2]>.5){if(Math.abs(L[0])>Math.abs(L[1]))dx=Math.sign(L[0]);else dy=Math.sign(L[1]);}
+PAD.navT-=dt;if(dx||dy){const fresh=[12,13,14,15].some(i=>dn(i))||PAD.navT<-.5;if(PAD.navT<=0||fresh){if(!(dx&&padRange(dx)))padNav(dx,dy);PAD.navT=fresh&&PAD.navT<-.5?.32:.15;}}else PAD.navT=-1;
+if(dn(0))padClick();if(dn(1))padBack();if(dn(4))padTab(-1);if(dn(5))padTab(1);
+if(dn(9)&&state==='lobby'&&menu===lobbyEl)act('hplay');
+if(R[2]&&menu)menu.scrollTop+=R[1]*dt*900;
+if(PAD.used&&performance.now()-PAD.used<20000&&(!PAD.focus||!PAD.focus.isConnected||!menu.contains(PAD.focus)))padNav(0,0);}
+let padLT=0;if(typeof requestAnimationFrame==='function')(function pl(t){requestAnimationFrame(pl);const dt=padLT?Math.min(.05,(t-padLT)/1000):.016;padLT=t;try{padTick(dt);}catch(e){}})(0);
+try{addEventListener('gamepadconnected',()=>{try{const s=document.getElementById('set');if(s&&s.style.display==='block'&&STAB==='keys')renderSet();}catch(_){}});addEventListener('mousemove',()=>{if(PAD.focus&&performance.now()-PAD.used>800){PAD.focus.classList.remove('padf');PAD.focus=null;}});}catch(_){}
+
 function loopInner(t){mobUpdate();scnSync();refreshPairs();const dt=Math.min(.05,(t-last)/1000);last=t;sky.position.copy(cam.position);if(state==='killcam'){kcUpdate(dt);return;}if(state==='post'){pgUpdate(dt);return;}if(state==='intro'){try{introUpdate(dt);}catch(e){reportErr(e);introEnd();}return;}if(CD.on)try{cdUpdate();}catch(_){}
 const live=state==='play'&&!over;if(live&&pdead<=0&&!(CD.on&&CD.end-performance.now()/1000>0)){cool-=dt;wallCool-=dt;
 if(keys.ArrowLeft)yaw+=1.8*dt;if(keys.ArrowRight)yaw-=1.8*dt;
 if(keys.ArrowUp)pitch=Math.min(1.5,pitch+1.5*dt);if(keys.ArrowDown)pitch=Math.max(-1.5,pitch-1.5*dt);
-const f=(keys.KeyW?1:0)-(keys.KeyS?1:0),r=(keys.KeyD?1:0)-(keys.KeyA?1:0);
-let wx=-Math.sin(yaw)*f+Math.cos(yaw)*r,wz=-Math.cos(yaw)*f-Math.sin(yaw)*r;const l=Math.hypot(wx,wz)||1;if(keys.ShiftLeft||keys.ShiftRight||keys.Space)crouch=false;const sp=(crouch?4:(keys.ShiftLeft||keys.ShiftRight)?13*(legN()==='Striker'?1.08:1):8)*(ST.stim>0?1.25:1)*(.9+((WP[wi]&&WP[wi].mob)||60)/500)*(PST.slow>0?.5:1)*(PST.stun>0?.45:1)*(LB.mode==='sv'?SV.b.spd:1)*(btMe()?1.15:1);const dxn=wx/l,dzn=wz/l;wx=dxn*sp;wz=dzn*sp;
+const f=Math.max(-1,Math.min(1,(keys.KeyW?1:0)-(keys.KeyS?1:0)-PAD.ly)),r=Math.max(-1,Math.min(1,(keys.KeyD?1:0)-(keys.KeyA?1:0)+PAD.lx)),pm=(PAD.mm>0&&!(keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD))?Math.max(.35,PAD.mm):1;
+let wx=-Math.sin(yaw)*f+Math.cos(yaw)*r,wz=-Math.cos(yaw)*f-Math.sin(yaw)*r;const l=Math.hypot(wx,wz)||1;if(keys.ShiftLeft||keys.ShiftRight||keys.Space)crouch=false;const sp=(crouch?4:(keys.ShiftLeft||keys.ShiftRight)?13*(legN()==='Striker'?1.08:1):8)*(ST.stim>0?1.25:1)*(.9+((WP[wi]&&WP[wi].mob)||60)/500)*(PST.slow>0?.5:1)*(PST.stun>0?.45:1)*(LB.mode==='sv'?SV.b.spd:1)*(btMe()?1.15:1);const dxn=wx/l,dzn=wz/l;wx=dxn*sp*pm;wz=dzn*sp*pm;
 const k=Math.min(1,(ground?16:3.6)*dt);if(slide>0){slide=keys.KeyC?1:0;H=1;if(ground){v.x*=1-.6*dt;v.z*=1-.6*dt;}}else{if(crouch)H=1;else if(H<1.8){H=1.8;if(B.some(b=>solid(b)&&hit(b)))H=1;}if(ground){v.x+=(wx-v.x)*k;v.z+=(wz-v.z)*k;}else if(!running){if((wx||wz)&&wallCool<=0){const h2=Math.hypot(v.x,v.z);if(h2>1){const df=Math.atan2(dxn,dzn)-Math.atan2(v.x,v.z),d2=Math.atan2(Math.sin(df),Math.cos(df));if(Math.abs(d2)<2.4){const a=Math.atan2(v.x,v.z)+Math.max(-4.2*dt,Math.min(4.2*dt,d2));v.x=Math.sin(a)*h2;v.z=Math.cos(a)*h2;}}}
 const dot=v.x*dxn+v.z*dzn,add=Math.max(0,Math.min(sp-dot,75*dt));v.x+=dxn*add;v.z+=dzn*add;}}
 const hs=Math.hypot(v.x,v.z);if(ground){wallT=0;dj=false;coyT=.12;}else coyT-=dt;slideBuf-=dt;if(ground&&slideBuf>0&&keys.KeyC)startSlide();

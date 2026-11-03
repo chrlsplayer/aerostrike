@@ -17,6 +17,7 @@
 - **Progression** — levels, 39 achievements with their own rewards, daily challenges and career stats
 - **Bright original world** — blue skies, glassy cities, floating islands, fish in bubbles, and indoor lab arenas
 - **Original soundtrack & announcer** — reactive music, kill-streak callouts and a match-found queue sound
+- **Controller support** — plug in an Xbox, PlayStation or other gamepad to play and navigate every menu
 - **Accounts** — sign in to keep your progress on any device (every name is unique), or play as a guest
 
 ## Running it yourself
