@@ -1,4 +1,4 @@
-// AeroStrike - game server (no extra packages needed, just Node.js)
+// Bubble Break - game server (no extra packages needed, just Node.js)
 // Run it with start.bat, or: node server.js
 const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto'), os = require('os');
 const PORT = +process.env.PORT || 3000;
@@ -13,6 +13,31 @@ async function kv(cmd) { const r = await fetch(KV_URL, { method: 'POST', headers
 const ACC_FILE = path.join(DATA_DIR, 'accounts.json');
 let ACC = {}; if (!KV) { try { ACC = JSON.parse(fs.readFileSync(ACC_FILE, 'utf8')) || {}; } catch (e) { ACC = {}; } }
 const TOK = new Map(), accT = {};
+// ---------- one-time wipe of player accounts (bot memory is kept). Change WIPE_ID to wipe again. ----------
+const WIPE_ID = 'bb1';
+async function wipeOnce() {
+  try {
+    if (KV) {
+      if (await kv(['GET', 'wipe']) === WIPE_ID) return;
+      let n = 0; for (const pat of ['acc:*', 'tok:*']) { let cur = '0'; do { const r = await kv(['SCAN', cur, 'MATCH', pat, 'COUNT', 500]); cur = String(r[0]); const ks = r[1] || []; if (ks.length) { await kv(['DEL', ...ks]); n += ks.length; } } while (cur !== '0'); }
+      await kv(['SET', 'wipe', WIPE_ID]); console.log('  Player data wiped (' + n + ' records). Bot memory kept.');
+    } else {
+      const mk = path.join(DATA_DIR, 'wipe.txt'); let cur = ''; try { cur = fs.readFileSync(mk, 'utf8').trim(); } catch (e) { }
+      if (cur === WIPE_ID) return; ACC = {}; try { fs.writeFileSync(ACC_FILE, '{}'); } catch (e) { } fs.writeFileSync(mk, WIPE_ID); console.log('  Player data wiped. Bot memory kept.');
+    }
+  } catch (e) { console.log('! wipe failed: ' + e.message); }
+}
+const WIPED = wipeOnce();
+// names: account names are reserved; nobody online can share a name
+async function nameFree(n) { const k = String(n).toLowerCase(); if (!/^[a-z0-9_]{3,16}$/.test(k)) return true; try { return !(await accGet(k)); } catch (e) { return true; } }
+function nameOnline(n, self) { const k = String(n).toLowerCase(); for (const R of ROOMS.values()) for (const q of R.P.values()) if (q !== self && !q.bot && String(q.name).toLowerCase() === k) return true; return false; }
+async function pickName(m, p) {
+  let acc = null; try { acc = m.token ? await tokGet(String(m.token)) : null; } catch (e) { acc = null; }
+  if (acc) { p.acc = acc; return acc; }
+  let base = String(m.name || 'Player').replace(/[^A-Za-z0-9_ ]/g, '').trim().slice(0, 12) || 'Player', n = base;
+  for (let i = 2; i < 999 && (nameOnline(n, p) || !(await nameFree(n))); i++) n = base.slice(0, 11) + i;
+  return n;
+}
 function accSave(key) {
   if (KV) { clearTimeout(accT[key]); accT[key] = setTimeout(() => { kv(['SET', 'acc:' + key, JSON.stringify(ACC[key])]).catch(e => console.log('! could not save account ' + key + ': ' + e.message)); }, 300); return; }
   clearTimeout(accT._f); accT._f = setTimeout(() => { try { fs.writeFileSync(ACC_FILE + '.tmp', JSON.stringify(ACC)); fs.renameSync(ACC_FILE + '.tmp', ACC_FILE); } catch (e) { console.log('! could not save accounts: ' + e.message); } }, 300);
@@ -30,7 +55,7 @@ function api(req, res, route) {
     try {
       let m = {}; try { m = JSON.parse(body || '{}'); } catch (e) { return jres(res, 400, { err: 'bad request' }); }
       if ((route === 'register' || route === 'login') && limited(req, 12)) return jres(res, 429, { err: 'Too many tries - wait a minute' });
-      const u = String(m.user || '').trim().toLowerCase(), key = u.replace(/[^a-z0-9_]/g, '');
+      await WIPED; const u = String(m.user || '').trim().toLowerCase(), key = u.replace(/[^a-z0-9_]/g, '');
       if (route === 'register') {
         if (key.length < 3 || key.length > 16 || key !== u) return jres(res, 400, { err: 'Username must be 3-16 letters, numbers or _' });
         if (String(m.pass || '').length < 4) return jres(res, 400, { err: 'Password must be at least 4 characters' });
@@ -73,6 +98,7 @@ function rosterApi(req, res) {
 
 // ---------- static file server ----------
 const srv = http.createServer((req, res) => {
+  if ((req.url || '').startsWith('/api/info')) { jres(res, 200, { epoch: WIPE_ID }); return; }
   if ((req.url || '').startsWith('/api/roster') && req.method === 'POST') { rosterApi(req, res); return; }
   const ap = (req.url || '').match(/^\/api\/(register|login|load|save)$/); if (ap && req.method === 'POST') { api(req, res, ap[1]); return; }
   let f = decodeURIComponent((req.url || '/').split('?')[0]);
@@ -286,10 +312,10 @@ function tickSnap() {
   function cap() { return TEAMM(cfg.mode) || cfg.mode === 'arena' ? (cfg.mode === 'lab' ? 6 : 10) : 8; }
   function autoStart(delay) { if (!pub) return; clearTimeout(autoT); autoT = setTimeout(() => { autoT = null; if (match || humans() === 0) return; const h = P.get(host) || [...P.values()].find(q => !q.bot); if (h) startMatch(h); }, delay); bc({ t: 'soon', in: Math.round(delay / 1000) }); }
   function join(p, m) {
-    p.joined = true; p.room = api; p.name = String(m.name || 'Player').replace(/[<>&"]/g, '').slice(0, 14) || 'Player';
-    p.skin = Math.max(0, Math.min(40, m.skin | 0)); p.gskin = Math.max(0, Math.min(20, m.gskin | 0));
+    p.joined = true; p.room = api; p.name = String(m.name || 'Player').replace(/[<>&"]/g, '').slice(0, 16) || 'Player';
+    p.skin = Math.max(0, Math.min(40, m.skin | 0)); p.gskin = Math.max(0, Math.min(80, m.gskin | 0));
     p.team = teamCount(0) <= teamCount(1) ? 0 : 1; P.set(p.id, p); if (!host) host = p.id;
-    p.c.send({ t: 'welcome', id: p.id, room: rid, pub }); lobby(); console.log('+ ' + p.name + ' joined room ' + rid + ' (' + humans() + ' here)');
+    p.c.send({ t: 'welcome', id: p.id, room: rid, pub, name: p.name }); lobby(); console.log('+ ' + p.name + ' joined room ' + rid + ' (' + humans() + ' here)');
     if (match) startFor(p); else if (pub && !autoT) autoStart(5000);
   }
   function leave(p) {
@@ -304,7 +330,7 @@ function tickSnap() {
   function destroy() { clearInterval(snapIv); clearTimeout(autoT); clearTimeout(arenaT); ROOMS.delete(rid); }
   const _end = endMatch;
   endMatch = function (w, t) { _end(w, t); if (pub && humans() > 0 && cfg.mode !== 'arena') autoStart(15000); };
-  const api = { rid, pub, cfg, join, leave, handle, humans, cap, get match() { return match; } };
+  const api = { rid, pub, cfg, P, join, leave, handle, humans, cap, get match() { return match; } };
   return api;
 }
 function roomCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c; do { c = ''; for (let i = 0; i < 4; i++) c += A[(Math.random() * A.length) | 0]; } while (ROOMS.has(c)); return c; }
@@ -325,12 +351,12 @@ function onConn(c) {
   ONLINE++; if (ONLINE > MAX_PLAYERS) { c.send({ t: 'full' }); setTimeout(() => c.kill(), 200); }
   let n = 0, nt = now();
   c.onmsg = s => { if (s.length > 2000) return; if (now() - nt > 1000) { nt = now(); n = 0; } if (++n > 120) return; let m; try { m = JSON.parse(s); } catch (e) { return; } if (!m || typeof m.t !== 'string') return;
-    try { if (m.t === 'join' && !p.room) { const R = pickRoom(m); if (!R) { c.send({ t: 'noroom' }); return; } if (R.humans() >= 16) { c.send({ t: 'full' }); return; } R.join(p, m); } else if (p.room) p.room.handle(p, m); } catch (e) { console.log('! error handling ' + m.t + ' from ' + p.name + ': ' + e.message); } };
-  c.onclose = () => { ONLINE--; if (p.room) p.room.leave(p); };
+    try { if (m.t === 'join' && !p.room) { if (p.joining) return; p.joining = 1; pickName(m, p).then(nm => { p.joining = 0; if (p.room || p.gone) return; m.name = nm; const R = pickRoom(m); if (!R) { c.send({ t: 'noroom' }); return; } if (R.humans() >= 16) { c.send({ t: 'full' }); return; } R.join(p, m); }).catch(e => { p.joining = 0; console.log('! join error: ' + e.message); }); } else if (p.room) p.room.handle(p, m); } catch (e) { console.log('! error handling ' + m.t + ' from ' + p.name + ': ' + e.message); } };
+  c.onclose = () => { ONLINE--; p.gone = 1; if (p.room) p.room.leave(p); };
 }
 process.on('uncaughtException', e => console.log('! unexpected error (server kept running): ' + (e && e.stack || e)));
 srv.listen(PORT, () => {
-  console.log('\n  AEROSTRIKE server is running!\n');
+  console.log('\n  BUBBLE BREAK server is running!\n');
   console.log('  Saving accounts to: ' + (KV ? 'Upstash cloud database' : path.join(DATA_DIR, 'accounts.json')));
   console.log('  On this computer open:   http://localhost:' + PORT);
   const ips = [];

@@ -1,8 +1,8 @@
 {
-  "name": "aerostrike",
+  "name": "bubble-break",
   "version": "1.0.0",
   "private": true,
-  "description": "AeroStrike game server",
+  "description": "Bubble Break game server",
   "scripts": { "start": "node server.js" },
   "engines": { "node": ">=20" }
 }

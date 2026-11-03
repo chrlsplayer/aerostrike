@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: aerostrike
+    name: bubble-break
     runtime: node
     plan: free
     buildCommand: echo "no build needed"

@@ -1,4 +1,4 @@
-AEROSTRIKE - multiplayer test server
+BUBBLE BREAK - multiplayer test server
 ======================================
 
 START

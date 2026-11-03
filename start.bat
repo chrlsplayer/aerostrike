@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title AeroStrike Server
+title Bubble Break Server
 where node >nul 2>nul
 if errorlevel 1 (
   echo Node.js was not found. Install it from https://nodejs.org and then run this again.
