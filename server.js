@@ -204,7 +204,7 @@ function pickMap(mode) {
 function startMatch(p) {
   let mode = cfg.mode;
   if (mode === 'arena') { let k, tr = 0; do { k = ARENA_POOL[(Math.random() * ARENA_POOL.length) | 0]; } while (k === arenaLast && tr++ < 20); arenaLast = k; arenaRound++; mode = k; }
-  match = { mode, arena: cfg.mode === 'arena' ? arenaRound : 0, ts: [0, 0], map: pickMap(mode), t0: Date.now(), bomb: { h: 0, t: 0, wait: 8, cd: 0 }, el: { st: 'play', t: 0 } }; removeBots();
+  match = { mode, arena: cfg.mode === 'arena' ? arenaRound : 0, ts: [0, 0], map: pickMap(mode), t0: Date.now(), bomb: { h: 0, t: 0, wait: 23, cd: 0 }, el: { st: 'play', t: 0 } }; removeBots();
   const team = TEAMM(mode), hum = humans(), want = cfg.bots < 0 ? Math.max(0, (team ? (mode === 'lab' ? 6 : 10) : 8) - hum) : cfg.bots;
   for (let i = 0; i < Math.min(14, want); i++) { const b = { id: nid++, c: null, bot: true, owner: p.id, name: BOT_NAMES[i % BOT_NAMES.length], skin: (Math.random() * 9) | 0, gskin: 0, team: teamCount(0) <= teamCount(1) ? 0 : 1, hp: 100, alive: false, k: 0, d: 0, st: null, lastDmg: 0, dmgWin: [], healT: 0, inm: true, joined: true }; P.set(b.id, b); }
   for (const q of P.values()) { q.k = 0; q.d = 0; q.elDead = false; } for (const q of P.values()) startFor(q); lobby();
