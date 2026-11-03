@@ -164,11 +164,11 @@ const MAP_S = [50,52,50,54,52,48,50,50,40,38];
 const LAB_MAPS = [8,9];
 const BOT_NAMES = ['Vex','Rook','Nova','Jinx','Echo','Kade','Mira','Zed','Onyx','Pike','Sable','Tarn','Lumi','Rift','Coda','Halo'];
 const now = () => Date.now();
-const MODES = ['ffa','tdm','dom','elim','gg','fz','bt','tgg','tfz','tbt','svs','ctf','lab','arena'];
-const TEAMM = m => ['tdm','dom','elim','tgg','tfz','tbt','svs','ctf','lab'].includes(m);
+const MODES = ['ffa','tdm','dom','hill','conf','elim','gg','fz','bt','tgg','tfz','tbt','svs','ctf','lab','arena'];
+const TEAMM = m => ['tdm','dom','hill','conf','elim','tgg','tfz','tbt','svs','ctf','lab'].includes(m);
 const KILLTS = m => ['tdm','svs','tgg','tfz'].includes(m);
 const ELM = m => m === 'elim' || m === 'lab';
-const ARENA_POOL = ['gg','fz','bt','svs','ctf','lab'];
+const ARENA_POOL = ['gg','fz','bt','svs','ctf','lab','hill','conf'];
 const GG_LEN = 10, BT_LIMIT = 8;
 const num = (v, d) => (typeof v === 'number' && isFinite(v)) ? v : d;
 // ---------- game rooms (each room runs its own match) ----------
@@ -286,7 +286,7 @@ function handle(p, m) {
   if (t === 'portal' && p.alive && Array.isArray(m.p)) { p.portals[m.i ? 1 : 0] = { x: num(m.p[0], 0), y: num(m.p[1], 0), z: num(m.p[2], 0) }; }
   if (t === 'ms' && p.id === host) { m.id = p.id; bc(m, p); return; }
   if (t === 'obj') { const A = attacker(p, m.from); const n = Math.max(0, Math.min(3, num(m.n, 0))); if (A && n) { A.ob = (A.ob || 0) + n; const tn = now(); if (tn - (match.obT || 0) > 500) { match.obT = tn; lobby(); } } return; }
-  if (t === 'msc' && p.id === host && (MM() === 'dom' || MM() === 'ctf')) { const tm = m.team ? 1 : 0, n = Math.max(0, Math.min(10, num(m.n, 1))); match.ts[tm] += n; bc({ t: 'ts', ts: match.ts, cap: MM() === 'ctf' ? tm : undefined }); const lim = MM() === 'ctf' ? 3 : 150; if (match.ts[tm] >= lim) endMatch(0, tm); return; }
+  if (t === 'msc' && p.id === host && ['dom','ctf','hill','conf'].includes(MM())) { const tm = m.team ? 1 : 0, n = Math.max(0, Math.min(10, num(m.n, 1))); match.ts[tm] += n; bc({ t: 'ts', ts: match.ts, cap: MM() === 'ctf' ? tm : undefined }); const lim = ({ ctf: 3, hill: 100, conf: 30 })[MM()] || 150; if (match.ts[tm] >= lim) endMatch(0, tm); return; }
   if ((t === 'shot' || t === 'fx' || t === 'portal') && (p.alive || t === 'shot' || t === 'fx')) { m.id = p.id; bc(m, p); return; }
 }
 
