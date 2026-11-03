@@ -1,0 +1,70 @@
+AEROSTRIKE - PUT THE GAME ON A FREE PUBLIC WEBSITE
+=====================================================
+
+You need 3 free accounts. Total time: about 20 minutes.
+  - GitHub  (stores your game files)          https://github.com
+  - Upstash (keeps player accounts forever)    https://upstash.com
+  - Render  (runs the game server/website)     https://render.com
+
+How it behaves on the free plan:
+  - The site goes to sleep after 15 minutes with nobody playing.
+  - The next visitor waits about a minute while it wakes up, then it plays normally.
+  - Player accounts and bot memory are kept in Upstash, so nothing is lost when it sleeps.
+
+
+STEP 1 - Put the game files on GitHub
+-------------------------------------
+1. Sign up at github.com and click the "+" (top right) > "New repository".
+2. Name it  aerostrike , choose Public, and click "Create repository".
+3. On the new page click "uploading an existing file".
+4. Open your  Documents\PortalArena  folder and drag EVERYTHING in it onto the page
+   (server.js, package.json, render.yaml, .gitignore, start.bat, README.txt and the
+   whole "public" folder). Do NOT upload accounts.json or roster.json.
+   Tip: .gitignore is a hidden file. If you can't see it, it's fine to skip it.
+5. Click "Commit changes".
+
+
+STEP 2 - Make the free account database (Upstash)
+-------------------------------------------------
+1. Sign up at upstash.com (you can sign in with your GitHub account).
+2. Click "Create Database" (Redis). Give it any name, pick the region closest
+   to you, choose the FREE plan, and create it.
+3. On the database page find the "REST API" section. Copy these two values:
+     UPSTASH_REDIS_REST_URL     (starts with https://)
+     UPSTASH_REDIS_REST_TOKEN   (a long string)
+   Keep the token secret - anyone with it can change your players' data.
+
+
+STEP 3 - Start the website (Render)
+-----------------------------------
+1. Sign up at render.com with your GitHub account.
+2. Click "New +" > "Blueprint", pick your  aerostrike  repository, and click "Connect".
+   (Render reads the render.yaml file and sets everything up on the Free plan.)
+3. It will ask for the two Upstash values from Step 2 - paste them in.
+4. Click "Apply" / "Deploy". Wait for the log to say
+     "AEROSTRIKE server is running!"  and  "Saving accounts to: Upstash cloud database"
+5. Your game is live at the address Render shows, like
+     https://aerostrike-xxxx.onrender.com
+   Send that link to anyone - they can play from any computer.
+
+
+UPDATING THE GAME LATER
+-----------------------
+When Claude gives you a new version, open your repository on GitHub, click
+"Add file" > "Upload files", drag the changed files in (usually public/index.html
+and sometimes server.js) and click "Commit changes". Render rebuilds the site
+by itself in a minute or two. Player accounts are not affected.
+
+
+HOW PLAYING WORKS ON THE WEBSITE
+--------------------------------
+- PLAY puts you in a queue for the mode on your Mode card. You join a public
+  match with other real players, and bots fill any empty spots.
+- Custom Game > "Create private room" gives you a 4-letter code. Friends type
+  the code and press "Join room" to play together.
+- Accounts: players make an account in the pop-up (or play as a guest).
+- The free site handles a good number of players; if it ever gets busy we can
+  move it to a bigger plan.
+
+Your PC version (start.bat) still works exactly like before and saves accounts
+in files next to server.js.
