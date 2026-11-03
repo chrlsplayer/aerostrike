@@ -215,7 +215,7 @@ function elimCheck() {
   const al = [0, 0]; for (const q of P.values()) if (q.inm && q.alive) al[q.team ? 1 : 0]++;
   if (al[0] && al[1]) return; const w = al[0] ? 0 : 1; match.ts[w]++; match.el.st = 'gap'; bc({ t: 'round', w, ts: match.ts });
   if (match.ts[w] >= (match.mode === 'lab' ? 3 : 4)) { setTimeout(() => endMatch(0, w), 2500); return; }
-  setTimeout(() => { if (!match || !ELM(match.mode)) return; match.el.st = 'play'; for (const q of P.values()) if (q.inm) { q.alive = true; q.hp = 100; q.fresh = true; q.elDead = false; } bc({ t: 'rstart' }); }, 4000);
+  setTimeout(() => { if (!match || !ELM(match.mode)) return; match.el.st = 'play'; for (const q of P.values()) if (q.inm) { q.alive = true; q.hp = 100; q.fresh = true; q.freshT = now() + 2500; q.elDead = false; } bc({ t: 'rstart' }); }, 4000);
 }
 
 function handle(p, m) {
@@ -239,7 +239,7 @@ function handle(p, m) {
   if (t === 'st' && m.s && typeof m.s === 'object') {
     const s = m.s, ns = { x: num(s.x, 0), y: num(s.y, 0), z: num(s.z, 0) }, tn = now(), lim = (MAP_S[match.map] || 60) + 8;
     if (Math.abs(ns.x) > lim || Math.abs(ns.z) > lim || ns.y < -40 || ns.y > 160) { if (p.st) p.c.send({ t: 'fix', x: p.st.x, y: p.st.y, z: p.st.z }); return; }
-    if (p.st && p.stT && !p.fresh) {
+    if (p.st && p.stT && !p.fresh && tn > (p.freshT || 0)) {
       const dt = Math.max(.03, (tn - p.stT) / 1000), dh = Math.hypot(ns.x - p.st.x, ns.z - p.st.z), up = ns.y - p.st.y;
       if ((dh > 50 * dt + 2 || up > 42 * dt + 2) && !portalJump(p.st, ns)) { p.viol = (p.viol || 0) + 1; p.c.send({ t: 'fix', x: p.st.x, y: p.st.y, z: p.st.z }); if (p.viol % 20 === 1) console.log('! blocked impossible movement from ' + p.name); return; }
     }
@@ -247,7 +247,7 @@ function handle(p, m) {
     p.st = { x: num(s.x, 0), y: num(s.y, 0), z: num(s.z, 0), yw: num(s.yw, 0), pt: num(s.pt, 0), vx: num(s.vx, 0), vz: num(s.vz, 0), g: s.g ? 1 : 0, sl: s.sl ? 1 : 0, cr: s.cr ? 1 : 0, wr: num(s.wr, 0), w: Math.max(0, Math.min(7, s.w | 0)), sh: s.sh ? 1 : 0, pz: s.pz ? 1 : 0, ck: s.ck ? 1 : 0 };
     return;
   }
-  if (t === 'resp') { const A = attacker(p, m.from); if (ELM(match.mode) && (!A || A.elDead || match.el.st !== 'play')) return; if (A && !A.alive) { A.alive = true; A.hp = 100; A.lastDmg = 0; A.fresh = true; } return; }
+  if (t === 'resp') { const A = attacker(p, m.from); if (ELM(match.mode) && (!A || A.elDead || match.el.st !== 'play')) return; if (A && !A.alive) { A.alive = true; A.hp = 100; A.lastDmg = 0; A.fresh = true; A.freshT = now() + 2500; } return; }
   if (t === 'bst' && Array.isArray(m.ps)) { for (const q of m.ps.slice(0, 16)) { const b = P.get(q && q.id); if (!b || !b.bot || b.owner !== p.id || !q.s) continue; const s = q.s; b.st = { x: num(s.x, 0), y: num(s.y, 0), z: num(s.z, 0), yw: num(s.yw, 0), pt: 0, vx: num(s.vx, 0), vz: 0, g: s.g ? 1 : 0, sl: s.sl ? 1 : 0, cr: 0, wr: 0, w: Math.max(0, Math.min(7, s.w | 0)), sh: 0, pz: 0, ck: 0 }; } return; }
   if (t === 'eff') {
     const tg = P.get(m.to), A = attacker(p, m.from); if (!tg || !tg.alive || !A || !A.alive || !['slow', 'stun', 'pull'].includes(m.k)) return;
