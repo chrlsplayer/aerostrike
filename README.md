@@ -2,7 +2,7 @@
 
 **Bubble Break** is a free-to-play 3D arena shooter that runs right in your web browser, wrapped in a bright, bubbly Frutiger Aero / Wii U look.
 
-**Play now:** https://bubble-break.onrender.com
+**Play now:** https://aerostrike.onrender.com/
 (The free server naps when nobody is playing — the first visit can take about a minute to wake it up.)
 
 ## Key features
